@@ -1,0 +1,6 @@
+# Don't use development node_modules
+node_modules
+Dockerfile
+.env
+README.md
+endpoints
