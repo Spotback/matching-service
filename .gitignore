@@ -2,5 +2,4 @@ node_modules
 .idea
 .env
 package-lock.json
-service-account-file.json
 .DS_Store
