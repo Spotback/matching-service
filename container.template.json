@@ -1,0 +1,32 @@
+{
+    "containers": {
+        "matching": {
+            "image": "",
+            "environment": {
+                "APP_ENV": "release",
+                "NODE_ENV": "production"
+            },
+            "ports": {
+                "80": "HTTP"
+            }
+        },
+        "redis": {
+            "image": "redis:6.0.6",
+            "ports": {
+                "6379": "TCP"
+            }
+        }
+    },
+    "publicEndpoint": {
+        "containerName": "matching",
+        "containerPort": 80,
+        "healthCheck": {
+            "healthyThreshold": 10,
+            "unhealthyThreshold": 10,
+            "timeoutSeconds": 120,
+            "intervalSeconds": 300,
+            "path": "/ping",
+            "successCodes": "200-499"
+        }
+    }
+}
