@@ -37,7 +37,7 @@ WORKDIR /usr/src/app
 # Bundle app source
 COPY . .
 # Define custom java options for containers
-ENV JAVA_OPTS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:+UseContainerSupport"
+ENV JAVA_OPTS="-XX:+UnlockExperimentalVMOptions -XX:+UseContainerSupport"
 ENV GOOGLE_APPLICATION_CREDENTIALS="./service-account-file.json"
 # define the entrypoint
 # ENTRYPOINT [ "./node_modules/.bin/es4x-launcher" ]
