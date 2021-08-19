@@ -1,4 +1,4 @@
-ARG BASEIMAGE=docker.pkg.github.com/graalvm/container/community:latest
+ARG BASEIMAGE=ghcr.io/graalvm/container/community:latest
 # Use official node for build
 FROM node:10 AS NPM
 # Create app directory
