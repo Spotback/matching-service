@@ -1,8 +1,6 @@
 ARG BASEIMAGE=oracle/graalvm-ce:20.0.0
 # Use official node for build
 FROM node:10 AS NPM
-
-ARG password
 # Create app directory
 WORKDIR /usr/src/app
 # Install app dependencies
