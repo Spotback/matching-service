@@ -1,6 +1,6 @@
 {
     "containers": {
-        "matching": {
+        "users": {
             "image": "",
             "environment": {
                 "APP_ENV": "release",
@@ -9,16 +9,10 @@
             "ports": {
                 "80": "HTTP"
             }
-        },
-        "redis": {
-            "image": "redis:6.0.6",
-            "ports": {
-                "6379": "TCP"
-            }
         }
     },
     "publicEndpoint": {
-        "containerName": "matching",
+        "containerName": "users",
         "containerPort": 80,
         "healthCheck": {
             "healthyThreshold": 10,

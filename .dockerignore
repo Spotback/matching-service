@@ -1,6 +1,8 @@
-# Don't use development node_modules
-node_modules
-Dockerfile
 .env
+release.sh
+build.sh
 README.md
-endpoints
+.git
+.gitignore
+enpoints
+node_modules

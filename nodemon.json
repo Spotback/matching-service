@@ -1,0 +1,6 @@
+{
+    "watch": ["src"],
+    "ext": ".ts,.js",
+    "ignore": [],
+    "exec": "export CONF_ENC_UNLOCK=xSO8P5MMSIlUQTIGeuHwtUK7 && ts-node src/lib/server.ts"
+  }

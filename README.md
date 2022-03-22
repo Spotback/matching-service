@@ -1,8 +1,11 @@
-# Spotback Matching-Service backend
+# Spotback User-Service backend
 
-This is an **[es4x](https://reactiverse.io/es4x/)** & **[Vertx](https://vertx.io/)** app made with **Javascript** and will handle matching functions. To run this app you will need to install **Graalvm** and swap it with your jvm in the java_home env variable.
+This is a **Node.js** & **Express** app made with **Typescript** and will handle CRUD functions. To run this app you will need to install **MongoDB** with the default settings and no authentication.
 
-* [match function](endpoints/match.md)
+* [create function](endpoints/create.md)
+* [read function](endpoints/read.md)
+* [update function](endpoints/update.md)
+* [delete function](endpoints/delete.md)
     
 
 ## Deploying and Running
@@ -23,11 +26,11 @@ $ npm run start
 ## Local development
 
 ```sh
-$ npm run start
+$ npm run start:dev
 
-$ docker build -t spotback/matching-service:x.x.x-TEST .
+$ docker build -t spotback/user-service:x.x.x-TEST .
 
-$ docker run -p 127.0.0.1:8080:3000 spotback/matching-service:x.x.x-TEST
+$ docker run -p 127.0.0.1:8080:3000 spotback/user-service:x.x.x-TEST
 ```
 
 ## Changing the config
@@ -41,8 +44,7 @@ KEY=VALUE
 ## Encrypt the config file that app will read
 
 ```sh
-$ npm install -g secure-env
-$ secure-env .env -s mySecretPassword
+secure-env .env -s <password>
 ```
 
 ## After changes have been tested you can push a new image version
