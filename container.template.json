@@ -1,6 +1,6 @@
 {
     "containers": {
-        "users": {
+        "matching": {
             "image": "",
             "environment": {
                 "APP_ENV": "release",
