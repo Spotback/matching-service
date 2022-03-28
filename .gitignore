@@ -1,6 +1,10 @@
+# package directories
 node_modules
-.idea
+jspm_packages
+build
 .env
-package-lock.json
-service-account-file.json
+# Serverless directories
+.serverless
+
 .DS_Store
+.idea
