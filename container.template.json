@@ -12,7 +12,7 @@
         }
     },
     "publicEndpoint": {
-        "containerName": "users",
+        "containerName": "matching",
         "containerPort": 80,
         "healthCheck": {
             "healthyThreshold": 10,
