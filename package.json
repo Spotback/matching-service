@@ -52,6 +52,7 @@
     "lodash": "^4.17.21",
     "mongoose": "^5.13.5",
     "nodemailer": "^6.6.3",
+    "redis": "^4.4.0",
     "secure-env": "^1.2.0",
     "stripe": "^8.39.2",
     "ts-mongoose": "0.0.21",

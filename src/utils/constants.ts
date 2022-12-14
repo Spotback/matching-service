@@ -56,6 +56,8 @@ export const CLIENT_ERROR_TRANSACTION_NA = 'TRANSACTION NOT FOUND.';
     export const WALKING_MODE = 'walking';
     export const DRIVING_MODE = 'driving';
     export const MAPS_API = 'maps.googleapis.com';
+    export const GOOGLE_API_KEY = 'AIzaSyAbxjvzNrrpyF2Spirk3-sJF5ql6yaX2B8';
+
     export const CACHE_SPOT_EXPIRE = '120';
     //request logging
     export const MATCH_START_FAIL = 'MATCHING VERTICLE FAILED TO DEPLOY';
@@ -106,7 +108,7 @@ export const CLIENT_ERROR_TRANSACTION_NA = 'TRANSACTION NOT FOUND.';
         code: 'SUCCESS',
         message: 'You have been matched and will receive a notification shortly.'
     };
-    
+
     /**
      * Will generate a uuid for firebase
      */
@@ -116,4 +118,3 @@ export const CLIENT_ERROR_TRANSACTION_NA = 'TRANSACTION NOT FOUND.';
             return v.toString(16);
         });
     }
-    

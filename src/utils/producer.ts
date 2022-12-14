@@ -34,7 +34,7 @@ class Producer {
                 "Information required to match with another user.",
             MessageDeduplicationId: message.email,  // Required for FIFO queues
             MessageGroupId: "Group1",  // Required for FIFO queues
-            QueueUrl: "https://sqs.us-west-2.amazonaws.com/762500751597/Matching-Requests.fifo" //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
+                QueueUrl: "https://sqs.us-west-2.amazonaws.com/762500751597/Matching-Requests.fifo" //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
         };
         try {
             const data = await this.sqsClient.send(new SendMessageCommand(params));
