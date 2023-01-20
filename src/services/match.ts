@@ -25,7 +25,6 @@ class Match {
 
     public account = (req: Request, res: Response): void => {
         const legit = JWT.verify(req.headers.bearer as string);
-        // const legit = {email:"af@gmail.com"}
         if (legit) {
             const email: string = legit.email;
             const body = req.body;

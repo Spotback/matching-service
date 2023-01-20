@@ -168,17 +168,17 @@ export const gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
         //calculate grade for both objects in same go and keep track of the index and best grade
         let grade = 0;
         for (let i = 0; i < desiredETAInfo.length; i++) {
-            console.log("grade",filteredSpots[i].leaveTime, currentETAInfo[i].distance.value)
-            console.log("grade",filteredSpots[i].leaveTime - currentETAInfo[i].distance.value)
-
+            console.log("grade1",filteredSpots[i].leaveTime, currentETAInfo[i].distance.value)
+            console.log("grade2",filteredSpots[i].leaveTime - currentETAInfo[i].distance.value)
+            console.log("grade3", desiredETAInfo[i].distance.value)
             // need to check if spot is more than 5mins away from location and if distance to client is more than the leave time
-            if (Math.abs(filteredSpots[i].leaveTime - currentETAInfo[i].distance.value) > 300
-                || desiredETAInfo[i].distance.value > 300) {
+            if (Math.abs(filteredSpots[i].leaveTime - currentETAInfo[i].distance.value) > 300 || desiredETAInfo[i].distance.value > 300) {
                 grade = -111111111111111;
             } else {
                 //assign abs(grade based on distance and duration) the higher the better
                 grade = -Math.abs(desiredETAInfo[i].distance.value + desiredETAInfo[i].duration.value + currentETAInfo[i].distance.value + currentETAInfo[i].duration.value);
             }
+            console.log("grade4",grade)
             filteredSpots[i].grade = grade;
             filteredSpots[i].etaFromSpot = desiredETAInfo[i].duration;
             filteredSpots[i].etaFromClient = currentETAInfo[i].duration;
@@ -187,7 +187,7 @@ export const gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
                 bestGradeIndex = i;
             }
         }
-        if (grade === -111111111111111) return -1;
+        if (bestGrade === -111111111111111) return -1;
         return bestGradeIndex;
     } catch (err) {
         console.log(Constants.GRADE_SPOTS_ERR + err);

@@ -85,8 +85,9 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
             console.log({desiredETAInfo,currentETAInfo})
             //find best match
             let recommendIndex = matchingUtil.gradeSpots(desiredETAInfo, currentETAInfo, filteredSpots);
-            console.log(filteredSpots)
+            // console.log(filteredSpots)
             //if the recommendIndex is less than 0 no spots were found.
+            console.log({recommendIndex});
             if (recommendIndex < 0) {
                 msg.reply(JSON.stringify(Constants.NO_SPOTS));
                 return;
@@ -147,7 +148,7 @@ export default function matcher(msg) {
              //lookup request
             let mongoMsg = {
                 collection: Constants.SPOTS_COLLECTION,
-                coordinates: val.desiredLocation,
+                data: matchingUtil.generateLookupQuerey(val.desiredLocation),
             }
             let mongoFuture = eb.requestAsync(Constants.MONGO_FIND_HANDLER, mongoMsg);
 

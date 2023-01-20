@@ -24,12 +24,12 @@ class App {
     }
 
     private mongoSetup(): void {
-        mongoose.connect(this.mongoUrl, { 
+        mongoose.connect(this.mongoUrl, {
             useNewUrlParser: true,
-            useUnifiedTopology: true, 
+            useUnifiedTopology: true,
             useCreateIndex: true,
             useFindAndModify: false
-        });
+        },()=>console.log("DB CONNECTED"));
     }
 
 }
