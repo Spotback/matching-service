@@ -15,7 +15,7 @@ const succeeded = ()=> true
 
 export const eventBus = (address, data,callback)=> {
     console.log({ address , data})
-    userdb.findOne(data.data).select('email car firstName lastName -_id ')
+    userdb.findOne(data.data).select('email car firstName lastName')
     .then(res=> {
         console.log("result",res)
         res.succeeded=succeeded;
