@@ -2,6 +2,7 @@
 import * as Constants from '../utils/constants';
 import * as matchingUtil from '../utils/matchingUtil';
 import {eventBus, eventBusAsync } from './consumer'
+import producer from '../utils/producer';
 import axios from 'axios'
 const redis = require('redis');
 const port = 6379
@@ -105,8 +106,8 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
                 };
                 //need to send a message on event bus to real-time verticle to create tracking record
                 // eb.requestAsync(Constants.REALTIME_HANDLER, realTimeMessage);
+                producer.send(realTimeMessage)
                 msg.reply(realTimeMessage);
-
                 return;
             }
     }).catch(err=>{

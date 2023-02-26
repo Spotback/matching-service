@@ -9,32 +9,31 @@ class Producer {
     sqsClient: SQSClient;
 
     constructor() {
-        const REGION = "us-west-2"; //e.g. "us-east-1"
+        const REGION = "eu-central-1"; //e.g. "us-east-1"
         this.sqsClient = new SQSClient({ region: REGION });
     }
 
     send = async (message) => {
         // Set the parameters
         const params = {
-            MessageAttributes: {
-                currentLocation: {
-                    DataType: "String",
-                    StringValue: message.currentLocation,
-                },
-                desiredLocation: {
-                    DataType: "String",
-                    StringValue: message.desiredLocation,
-                },
-                email: {
-                    DataType: "String",
-                    StringValue: message.email,
-                },
-            },
-            MessageBody:
-                "Information required to match with another user.",
-            MessageDeduplicationId: message.email,  // Required for FIFO queues
-            MessageGroupId: "Group1",  // Required for FIFO queues
-                QueueUrl: "https://sqs.us-west-2.amazonaws.com/762500751597/Matching-Requests.fifo" //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
+            // MessageAttributes: {
+            //     currentLocation: {
+            //         DataType: "String",
+            //         StringValue: message.currentLocation,
+            //     },
+            //     desiredLocation: {
+            //         DataType: "String",
+            //         StringValue: message.desiredLocation,
+            //     },
+            //     email: {
+            //         DataType: "String",
+            //         StringValue: message.email,
+            //     },
+            // },
+            MessageBody: JSON.stringify(message),
+            MessageDeduplicationId: message.body.email,  // Required for FIFO queues
+            MessageGroupId: "match",  // Required for FIFO queues
+            QueueUrl: "https://sqs.eu-central-1.amazonaws.com/814530434735/match.fifo" //SQS_QUEUE_URL; e.g., 'https://sqs.REGION.amazonaws.com/ACCOUNT-ID/QUEUE-NAME'
         };
         try {
             const data = await this.sqsClient.send(new SendMessageCommand(params));
@@ -46,4 +45,4 @@ class Producer {
     };
 }
 
-export default new Producer();
+module.exports =  new Producer();

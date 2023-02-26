@@ -176,7 +176,7 @@ export const gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
                 grade = -111111111111111;
             } else {
                 //assign abs(grade based on distance and duration) the higher the better
-                grade = -Math.abs(desiredETAInfo[i].distance.value + desiredETAInfo[i].duration.value + currentETAInfo[i].distance.value + currentETAInfo[i].duration.value);
+                grade = Math.abs(desiredETAInfo[i].distance.value + desiredETAInfo[i].duration.value + currentETAInfo[i].distance.value + currentETAInfo[i].duration.value);
             }
             console.log("grade4",grade)
             filteredSpots[i].grade = grade;
@@ -187,7 +187,7 @@ export const gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
                 bestGradeIndex = i;
             }
         }
-        if (grade === -111111111111111) return -1;
+        if (bestGrade === -111111111111111) return -1;
         return bestGradeIndex;
     } catch (err) {
         console.log(Constants.GRADE_SPOTS_ERR + err);
