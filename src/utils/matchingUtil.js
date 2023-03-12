@@ -70,7 +70,7 @@ function ySameXLower(x, y) {
  * @param {string} desiredLocation
  * @returns {Object} mongodb query
  */
-exports.generateLookupQuerey = (desiredLocation) => {
+export const generateLookupQuerey = (desiredLocation) => {
     const longitudeX = parseFloat(desiredLocation.split(",")[0]);
     const latitudeY = parseFloat(desiredLocation.split(",")[1]);
     const xSameYUp = xSameYUpper(longitudeX, latitudeY);
@@ -93,7 +93,7 @@ exports.generateLookupQuerey = (desiredLocation) => {
  * @param {Object[]} blocks
  * @returns {Object[]} array of spots
  */
-exports.mergeAvailSpots = (blocks) => {
+export const mergeAvailSpots = (blocks) => {
     let block1Spots = blocks[0] && blocks[0].spots ? blocks[0].spots : [];
     let block2Spots = blocks[1] && blocks[1].spots ? blocks[1].spots : [];
     let block3Spots = blocks[2] && blocks[2].spots ? blocks[2].spots : [];
@@ -108,7 +108,7 @@ exports.mergeAvailSpots = (blocks) => {
  * @param {Object} potentialSpot
  * @returns {boolean} are the cars compatible for a match
  */
-exports.filterCarType = (clientCar, potentialSpot) => {
+export const filterCarType = (clientCar, potentialSpot) => {
     let filter = clientCar.carType + '|' + potentialSpot.car.carType;
     if (filter === 'LARGE|SMALL') return false;
     if (filter === 'SMALL|LARGE') return false;
@@ -121,7 +121,7 @@ exports.filterCarType = (clientCar, potentialSpot) => {
  * @param {Object} potentialSpot - potential spot containing spot info
  * @returns {boolean} have we already recommended this spot
  */
-exports.filterCached = (cachedSpots, potentialSpot) => {
+export const filterCached = (cachedSpots, potentialSpot) => {
     if (potentialSpot.email in cachedSpots) return false;
     return true;
 }
@@ -131,13 +131,15 @@ exports.filterCached = (cachedSpots, potentialSpot) => {
  * @param {Object[]} redisScan - result of a redis scan - Java Object
  * @returns {Object} a map of all the keys in the redis scan
  */
-exports.javaArrayToMap = (redisScan) => {
+export const javaArrayToMap = (redisScan) => {
     try {
         //map will contain all the unavailable spots from the last 5 mins
         let map = {};
-        let size = redisScan.get(1).size();
+        return map;
+        let size = redisScan[1].length;
         for (let i = 0; i < size; i++) {
-            let key = redisScan.get(1).get(i);
+            let list = redisScan[1];
+            let key = list[1];
             //set email as key, and value can be anything, wont be using the value
             map[key] = 1;
         }
@@ -155,8 +157,9 @@ exports.javaArrayToMap = (redisScan) => {
  * @param {Object[]} filteredSpots - spots to grade (grade = -Math.abs(desired.dis.val + desired.dur.val + current.dis.val + current.dur.val))
  * @returns {number} represents the index in fileteredSpots containing the best grade
  */
-exports.gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
+export const gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
     try {
+
         //will keep track of where the highest score is in the array
         let bestGradeIndex = 0;
         let bestGrade = 0;
@@ -165,14 +168,17 @@ exports.gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
         //calculate grade for both objects in same go and keep track of the index and best grade
         let grade = 0;
         for (let i = 0; i < desiredETAInfo.length; i++) {
+            console.log("grade1",filteredSpots[i].leaveTime, currentETAInfo[i].distance.value)
+            console.log("grade2",filteredSpots[i].leaveTime - currentETAInfo[i].distance.value)
+            console.log("grade3", desiredETAInfo[i].distance.value)
             // need to check if spot is more than 5mins away from location and if distance to client is more than the leave time
-            if (Math.abs(filteredSpots[i].leaveTime - currentETAInfo[i].distance.value) > 300
-                || desiredETAInfo[i].distance.value > 300) {
+            if (Math.abs(filteredSpots[i].leaveTime - currentETAInfo[i].distance.value) > 300 || desiredETAInfo[i].distance.value > 300) {
                 grade = -111111111111111;
             } else {
                 //assign abs(grade based on distance and duration) the higher the better
-            grade = -Math.abs(desiredETAInfo[i].distance.value + desiredETAInfo[i].duration.value + currentETAInfo[i].distance.value + currentETAInfo[i].duration.value);
+                grade = Math.abs(desiredETAInfo[i].distance.value + desiredETAInfo[i].duration.value + currentETAInfo[i].distance.value + currentETAInfo[i].duration.value);
             }
+            console.log("grade4",grade)
             filteredSpots[i].grade = grade;
             filteredSpots[i].etaFromSpot = desiredETAInfo[i].duration;
             filteredSpots[i].etaFromClient = currentETAInfo[i].duration;
@@ -181,7 +187,7 @@ exports.gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
                 bestGradeIndex = i;
             }
         }
-        if (grade === -111111111111111) return -1;
+        if (bestGrade === -111111111111111) return -1;
         return bestGradeIndex;
     } catch (err) {
         console.log(Constants.GRADE_SPOTS_ERR + err);
@@ -196,7 +202,7 @@ exports.gradeSpots = (desiredETAInfo, currentETAInfo, filteredSpots) => {
  * @param {string} mode - transportation method to location, ie: walking, driving, bus
  * @returns {string[]} Google DistanceMatrix Destinations param
  */
-exports.generateDestinationUri = (filteredSpots, location, mode) => {
+export const generateDestinationUri = (filteredSpots, location, mode) => {
     //100 because there can be 100 locations in each param uri
     const paramCount = Math.ceil(filteredSpots.length / 100);
     //create array to hold the partitioned uris
