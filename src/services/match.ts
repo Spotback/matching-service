@@ -23,7 +23,7 @@ class Match {
         return false;
     }
 
-    public account = (req: Request, res: Response): void => {
+    public account = async (req: Request, res: Response): Promise<void> => {
         const legit = JWT.verify(req.headers.bearer as string);
         if (legit) {
             const email: string = legit.email;
@@ -34,7 +34,7 @@ class Match {
             if(this.validateReq(body)) {
                 // producer.send(body);
                 let m = new Message(body,res);
-                matcherAlgo(m)
+                await matcherAlgo(m)
                 // WebUtil.successResponse(res, Constants.SUCCESS, 200, null);
             } else {
                 WebUtil.errorResponse(res, "Missing request parameters", Constants.CLIENT_ERROR_HB, 400);

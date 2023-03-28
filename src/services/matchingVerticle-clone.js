@@ -5,7 +5,7 @@ import producer from '../utils/producer';
 import axios from 'axios';
 const redis = require('redis');
 const port = 6379;
-const host = 'localhost';
+const host = 'redis.69aeo17k10t7c.us-west-2.cs.amazonlightsail.com';
 
 /*-------------------------------init-------------------------------*/
 let deploymentId = '';
@@ -14,6 +14,9 @@ const eb = { request: eventBus, requestAsync: eventBusAsync };
 let redisClient;
 try{
     redisClient = redis.createClient(port, host);
+	redisClient.on('connect', function() {
+  		console.log('Connected to Redis server');
+	});
 }catch(err){
     console.log("error in redisClient",err)
 }
@@ -143,7 +146,7 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
  * Receives messages from the event bus and reply with a match, if found.
  * @param {Message} msg - vertx event bus message with the request body
  */
-export default function matcher(msg) {
+export default async function matcher(msg) {
 	const val = msg.body();
 	//request validation
 	if (!val.email || !val.desiredLocation || !val.currentLocation) {
@@ -158,12 +161,14 @@ export default function matcher(msg) {
 		},
 	};
 	//lookup user - send message to mongo verticle
-	eb.request(Constants.MONGO_FINDONE_HANDLER, mongoMsg, (findUserRes) => {
+	eb.request(Constants.MONGO_FINDONE_HANDLER, mongoMsg, async (findUserRes) => {
 		if (findUserRes.succeeded()) {
 			console.log(Constants.MATCH_REQ_LOG);
-			let redisFuture = {};
+			let redisFuture = new Promise((res,rej)=>{
+				res([{keys:{}}]);
+			});
 			try {
-				if (!redisClient.isOpen) redisClient.connect();
+				if (!redisClient.isOpen) await redisClient.connect();
 
 				// get all the emails of previously recommended spots up to 5m ago.
 				redisFuture = redisClient.scan(['0']);
