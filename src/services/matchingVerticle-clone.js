@@ -142,6 +142,19 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 		});
 }
 
+const checkRedisConnection = async (client, timeout = 1000) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout")), timeout)
+  );
+
+  try {
+    await Promise.race([client.ping(), timeoutPromise]);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 /**
  * Receives messages from the event bus and reply with a match, if found.
  * @param {Message} msg - vertx event bus message with the request body
@@ -168,8 +181,10 @@ export default async function matcher(msg) {
 				res([{keys:{}}]);
 			});
 			try {
-				if (!redisClient.isOpen) await redisClient.connect();
 
+				const isConnected = await checkRedisConnection(redisClient, 500); // 500ms timeout
+				console.log("redis is Connected", isConnected)
+				if (!isConnected) await redisClient.connect();
 				// get all the emails of previously recommended spots up to 5m ago.
 				redisFuture = redisClient.scan(['0']);
 			} catch (e) {
@@ -182,29 +197,31 @@ export default async function matcher(msg) {
 				collection: Constants.SPOTS_COLLECTION,
 				data: matchingUtil.generateLookupQuerey(val.desiredLocation),
 			};
-			let mongoFuture = eb.requestAsync(Constants.MONGO_FIND_HANDLER, mongoMsg);
+			try {
+				//collect results when they finish
+				let mongoFuture = eb.requestAsync(Constants.MONGO_FIND_HANDLER, mongoMsg);
+				console.log("before Promise")
+				console.log({redisFuture})
+				const values= await Promise.all([redisFuture, mongoFuture])
+				console.log("after Promise")
 
-			//collect results when they finish
-			Promise.all([redisFuture, mongoFuture])
-				.then((values) => {
-					console.log(values[0], values[1]);
-					//get the array of emails that have already been matched
-					const cachedSpots = matchingUtil.javaArrayToMap(values[0].keys);
-					console.log({ cachedSpots });
-					//merge spots into an array we can work with
-					const availSpots = matchingUtil.mergeAvailSpots(values[1]);
-					console.log({ availSpots });
-
-					//perform the search for a match
-					algorithm(findUserRes, cachedSpots, availSpots, val, msg);
-				})
-				.catch((err) => {
-					console.log(err);
-					console.log(Constants.MONGO_SPOT_OR_CACHE_LOOKUP_FAIL + err.message);
-					reply.code = Constants.SERVER_ERROR;
-					reply.message = err.message;
-					msg.fail(500, JSON.stringify(reply));
-				});
+				console.log(values[0], values[1]);
+				//get the array of emails that have already been matched
+				const cachedSpots = matchingUtil.javaArrayToMap(values[0].keys);
+				console.log({ cachedSpots });
+				//merge spots into an array we can work with
+				const availSpots = matchingUtil.mergeAvailSpots(values[1]);
+				console.log({ availSpots })
+				//perform the search for a match
+				algorithm(findUserRes, cachedSpots, availSpots, val, msg);
+			} catch (error) {
+				console.log("error Promise")
+				console.log(error);
+				console.log(Constants.MONGO_SPOT_OR_CACHE_LOOKUP_FAIL + err.message);
+				reply.code = Constants.SERVER_ERROR;
+				reply.message = err.message;
+				msg.fail(500, JSON.stringify(reply));
+			}
 			// CompositeFuture.all(redisFuture, mongoFuture).onComplete((ar) => {
 			// });
 		} else {
