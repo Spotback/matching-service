@@ -11,8 +11,12 @@ const host = 'localhost';
 let deploymentId = '';
 
 const eb = { request: eventBus, requestAsync: eventBusAsync };
-
-const redisClient = redis.createClient(port, host);
+let redisClient;
+try{
+    redisClient = redis.createClient(port, host);
+}catch(err){
+    console.log("error in redisClient",err)
+}
 
 //reuse object for requests
 const reply = {};
@@ -105,11 +109,16 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 			} else {
 				//reply with match
 				let match = filteredSpots[recommendIndex];
-				//need to cache the result for 120 seconds so we dont recommend again, until the delete finishes
+                try{
 				redisClient
 					.setEx(match.email, Constants.CACHE_SPOT_EXPIRE, Date.now().toString())
 					.then(console.log)
 					.catch(console.error);
+                }catch(err){
+                    console.log("error in redisClient setex algorithm", err)
+                }
+				//need to cache the result for 120 seconds so we dont recommend again, until the delete finishes
+
 				let realTimeMessage = {
 					user,
 					match,
@@ -159,7 +168,7 @@ export default function matcher(msg) {
 				// get all the emails of previously recommended spots up to 5m ago.
 				redisFuture = redisClient.scan(['0']);
 			} catch (e) {
-				console.log(e);
+				console.log("redis Error connect",e);
 			}
 			//get all the potential blocks near desired location
 			//lookup spots - send message to mongo verticle
