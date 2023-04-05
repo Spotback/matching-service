@@ -130,9 +130,10 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 				console.log({parker});
 				match.firstName=parker.firstName
 				match.lastName=parker.lastName
-				const transactionId= `${user.email}&${parker.email}&${Date.now()}`
+				const userEmail = user.email.replace(/@\w+.*/,'')
+				const parkerEmail = parker.email.replace(/@\w+.*/,'')
+				const transactionId= `${userEmail}&${parkerEmail}&${Date.now()}`
 				//need to cache the result for 120 seconds so we dont recommend again, until the delete finishes
-
 				const transaction={
 					transaction_id: transactionId,
 					driver: {
