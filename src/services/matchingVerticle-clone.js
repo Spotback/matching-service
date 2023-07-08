@@ -4,15 +4,25 @@ import { eventBus, eventBusAsync } from './consumer';
 import producer from '../utils/producer';
 import axios from 'axios';
 const redis = require('redis');
+import Transaction from "../model/transaction";
+import User from "../model/user";
+
 const port = 6379;
-const host = 'localhost';
+const host = 'redis.69aeo17k10t7c.us-west-2.cs.amazonlightsail.com';
 
 /*-------------------------------init-------------------------------*/
 let deploymentId = '';
 
 const eb = { request: eventBus, requestAsync: eventBusAsync };
-
-const redisClient = redis.createClient(port, host);
+let redisClient;
+try{
+    redisClient = redis.createClient(port, host);
+	redisClient.on('connect', function() {
+  		console.log('Connected to Redis server');
+	});
+}catch(err){
+    console.log("error in redisClient",err)
+}
 
 //reuse object for requests
 const reply = {};
@@ -55,12 +65,14 @@ async function etaWebCall(destUris) {
  */
 function algorithm(user, cachedSpots, availSpots, body, msg) {
 	//filter the unavailable and incompatible spots
-	const loc = 'ALGORITHM';
+	const log = 'ALGORITHM';
 	const filteredSpots = availSpots
 		.filter((spot) => matchingUtil.filterCached(cachedSpots, spot))
-		.filter((spot) => matchingUtil.filterCarType(user.car, spot));
+		.filter((spot) => matchingUtil.filterCarType(user.car, spot))
+		.filter((spot) => matchingUtil.filterSameUsers(user, spot));
+
 	//if filteredSpots is empty then fail
-	console.log(loc, { filteredSpots });
+	console.log(log, { filteredSpots });
 
 	if (filteredSpots.length < 1) {
 		msg.reply(Constants.NO_SPOTS);
@@ -89,7 +101,7 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 
 	//need to merge results from each call to an array of {distances:{}, durations:{}} for spotsToCurrent and spotsToDesired
 	Promise.all([desiredFuture, currentFuture])
-		.then((ar) => {
+		.then(async (ar) => {
 			//eta info
 			const desiredETAInfo = ar[0];
 			const currentETAInfo = ar[1];
@@ -105,12 +117,41 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 			} else {
 				//reply with match
 				let match = filteredSpots[recommendIndex];
-				//need to cache the result for 120 seconds so we dont recommend again, until the delete finishes
+                try{
 				redisClient
 					.setEx(match.email, Constants.CACHE_SPOT_EXPIRE, Date.now().toString())
 					.then(console.log)
 					.catch(console.error);
+                }catch(err){
+                    console.log("error in redisClient setex algorithm", err)
+                }
+				// retreve match info (full name)
+				const parker = await User.findOne({email:match.email});
+				console.log({parker});
+				match.firstName=parker.firstName
+				match.lastName=parker.lastName
+				const userEmail = user.email.replace(/@\w+.*/,'')
+				const parkerEmail = parker.email.replace(/@\w+.*/,'')
+				const transactionId= `${userEmail}&${parkerEmail}&${Date.now()}`
+				//need to cache the result for 120 seconds so we dont recommend again, until the delete finishes
+				const transaction={
+					transaction_id: transactionId,
+					driver: {
+						lastName: user.lastName,
+						firstName: user.firstName,
+						email: user.email,
+					},
+					parker: {
+						lastName: parker.lastName,
+						firstName: parker.firstName,
+						email: parker.email,
+					},
+				}
+
+				const result = await Transaction.create(transaction);
+
 				let realTimeMessage = {
+					transaction:result,
 					user,
 					match,
 					body,
@@ -130,11 +171,24 @@ function algorithm(user, cachedSpots, availSpots, body, msg) {
 		});
 }
 
+const checkRedisConnection = async (client, timeout = 1000) => {
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout")), timeout)
+  );
+
+  try {
+    await Promise.race([client.ping(), timeoutPromise]);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 /**
  * Receives messages from the event bus and reply with a match, if found.
  * @param {Message} msg - vertx event bus message with the request body
  */
-export default function matcher(msg) {
+export default async function matcher(msg) {
 	const val = msg.body();
 	//request validation
 	if (!val.email || !val.desiredLocation || !val.currentLocation) {
@@ -142,64 +196,68 @@ export default function matcher(msg) {
 		return;
 	}
 	//lookup request
-	let mongoMsg = {
-		collection: Constants.USER_COLLECTION,
-		data: {
-			email: val.email,
-		},
-	};
+
 	//lookup user - send message to mongo verticle
-	eb.request(Constants.MONGO_FINDONE_HANDLER, mongoMsg, (findUserRes) => {
-		if (findUserRes.succeeded()) {
-			console.log(Constants.MATCH_REQ_LOG);
-			let redisFuture = {};
-			try {
-				if (!redisClient.isOpen) redisClient.connect();
-
-				// get all the emails of previously recommended spots up to 5m ago.
-				redisFuture = redisClient.scan(['0']);
-			} catch (e) {
-				console.log(e);
-			}
-			//get all the potential blocks near desired location
-			//lookup spots - send message to mongo verticle
-			//lookup request
-			let mongoMsg = {
-				collection: Constants.SPOTS_COLLECTION,
-				data: matchingUtil.generateLookupQuerey(val.desiredLocation),
-			};
+	try{
+		let mongoMsg = {
+			collection: Constants.USER_COLLECTION,
+			data: {
+				email: val.email,
+			},
+		};
+		const findUserRes = await eb.requestAsync(Constants.MONGO_FINDONE_HANDLER, mongoMsg);
+		console.log(Constants.MATCH_REQ_LOG);
+		let redisFuture = new Promise((res,rej)=>{
+			res([{keys:{}}]);
+		});
+		try {
+			const isConnected = await checkRedisConnection(redisClient, 500); // 500ms timeout
+			console.log("redis is Connected", isConnected)
+			if (!isConnected) await redisClient.connect();
+			// get all the emails of previously recommended spots up to 5m ago.
+			redisFuture = redisClient.scan(['0']);
+		} catch (e) {
+			console.log("redis Error connect",e);
+		}
+		//get all the pot²	ential blocks near desired location
+		//lookup spots - send message to mongo verticle
+		//lookup request
+		mongoMsg = {
+			collection: Constants.SPOTS_COLLECTION,
+			data: matchingUtil.generateLookupQuerey(val.desiredLocation),
+		};
+		try {
 			let mongoFuture = eb.requestAsync(Constants.MONGO_FIND_HANDLER, mongoMsg);
-
+			console.log("before Promise")
+			console.log({mongoFuture})
 			//collect results when they finish
-			Promise.all([redisFuture, mongoFuture])
-				.then((values) => {
-					console.log(values[0], values[1]);
-					//get the array of emails that have already been matched
-					const cachedSpots = matchingUtil.javaArrayToMap(values[0].keys);
-					console.log({ cachedSpots });
-					//merge spots into an array we can work with
-					const availSpots = matchingUtil.mergeAvailSpots(values[1]);
-					console.log({ availSpots });
-
-					//perform the search for a match
-					algorithm(findUserRes, cachedSpots, availSpots, val, msg);
-				})
-				.catch((err) => {
-					console.log(err);
-					console.log(Constants.MONGO_SPOT_OR_CACHE_LOOKUP_FAIL + err.message);
-					reply.code = Constants.SERVER_ERROR;
-					reply.message = err.message;
-					msg.fail(500, JSON.stringify(reply));
-				});
-			// CompositeFuture.all(redisFuture, mongoFuture).onComplete((ar) => {
-			// });
-		} else {
-			console.log(Constants.MONGO_USER_LOOKUP_FAIL + findUserRes.cause());
+			const values= await Promise.all([redisFuture, mongoFuture])
+			console.log("after Promise")
+			console.log(values[0], values[1]);
+			//get the array of emails that have already been matched
+			const cachedSpots = matchingUtil.javaArrayToMap(values[0].keys);
+			console.log({ cachedSpots });
+			//merge spots into an array we can work with
+			const availSpots = matchingUtil.mergeAvailSpots(values[1]);
+			console.log({ availSpots })
+			//perform the search for a match
+			algorithm(findUserRes, cachedSpots, availSpots, val, msg);
+		} catch (error) {
+			console.log("error Promise")
+			console.log(error);
+			console.log(Constants.MONGO_SPOT_OR_CACHE_LOOKUP_FAIL + err.message);
 			reply.code = Constants.SERVER_ERROR;
-			reply.message = findUserRes.cause();
+			reply.message = err.message;
 			msg.fail(500, JSON.stringify(reply));
 		}
-	});
+			// CompositeFuture.all(redisFuture, mongoFuture).onComplete((ar) => {
+			// });
+	}catch(err){
+		console.log(Constants.MONGO_USER_LOOKUP_FAIL + err.message);
+		reply.code = Constants.SERVER_ERROR;
+		reply.message = err.message;
+		msg.fail(500, JSON.stringify(reply));
+	}
 }
 
 /**

@@ -24,7 +24,7 @@ export const dotify = (obj: any) => {
         }
       }
     }
-  
+
     recurse(obj);
     return res;
   }
@@ -36,33 +36,37 @@ export interface Rating {
     timestamp: number;
 }
 
-export interface TransactionDetail {
-    transactionId: string;
-    // email of the user in transaction with the other user
-    email: string;
-    timestamp: number;
-    coordinates: string;
-    rating: Rating;
+export interface TransactionUser {
+    lastName: string,
+    firstName: string,
+    email: string
 }
 
 export interface UserTransactions extends mongoose.Document {
-    transactions:Array<TransactionDetail>;
-    email: string;
+    transaction_id:string,
+    driver: TransactionUser,
+    parker: TransactionUser,
 }
 
 export const UserTransactionSchema = new Schema({
-    transactions: {
-        type: Array<TransactionDetail>(),
-        required: true,
-        default: []
-    },
-    email: {
-        type: String,
-        index: true,
-        unique: true,
-        required: true            
-    },
+  transaction_id: {
+    type: String,
+    required: true,
+    index: true,
+    unique: true
+  },
+  driver: {
+    lastName: String,
+    firstName: String,
+    email: String,
+  },
+  parker: {
+    lastName: String,
+    firstName: String,
+    email: String,
+  },
 });
+
 
 const UserTransactionDB = mongoose.model<UserTransactions>(Constants.TRANSACTIONS_TABLE, UserTransactionSchema);
 export default UserTransactionDB;

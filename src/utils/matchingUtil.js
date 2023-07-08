@@ -114,6 +114,10 @@ export const filterCarType = (clientCar, potentialSpot) => {
     if (filter === 'SMALL|LARGE') return false;
     return true;
 }
+export const filterSameUsers = (client, potentialSpot) => {
+    if (client.email === potentialSpot.email ) return false;
+    return true;
+}
 
 /**
  * Used to prevent matches with unavailable spots.

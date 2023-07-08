@@ -3,7 +3,7 @@ export const WELCOME_HTML_LOCATION = './resources/welcome.html';
 export const WELCOME_SUBJECT = 'Thank you for joining the Spotback community!';
 
 export const USERS_TABLE = 'Users';
-export const TRANSACTIONS_TABLE = 'Transactions';
+export const TRANSACTIONS_TABLE = 'Transactions_Users';
 
 //response messages
 export const ACCOUNT_EXISTS_LOG = 'An account with that email already exists.';
